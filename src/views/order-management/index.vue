@@ -11,13 +11,7 @@
     >
       <template #queryBarInput>
         <QueryBarItem label="订单状态" :label-width="80">
-          <n-input
-            v-model:value="queryItems.productCategoryName"
-            type="text"
-            placeholder="请输入分类名称"
-            clearable
-            @keydown.enter="$table?.handleSearch"
-          />
+          <n-select v-model:value="queryItems.orderSiteStatus" clearable :options="statusOptions" />
         </QueryBarItem>
       </template>
     </CrudTable>
@@ -39,29 +33,41 @@
           :disabled="modalAction === 'view'"
         >
           <n-form-item
-            label="分类名称"
-            path="productCategoryName"
+            label="订单编号"
+            path="orderNum"
             :rule="{
               required: true,
               message: '请输入分类名称',
               trigger: ['input', 'blur'],
             }"
           >
-            <n-input v-model:value="modalForm.productCategoryName" placeholder="请输入分类名称" />
+            <n-input v-model:value="modalForm.orderNum" placeholder="请输入分类名称" />
           </n-form-item>
           <n-form-item
-            label="分类排序"
+            label="订单状态"
             :rule="{
               required: true,
               message: '请输入排序',
               trigger: ['input', 'blur'],
-              validator: validateSort,
             }"
           >
-            <n-input-number v-model:value="modalForm.sortNo" :min="1" placeholder="请输入排序" />
+            <n-select v-model:value="modalForm.orderSiteStatus" clearable :options="statusOptions" />
           </n-form-item>
-          <n-form-item label="是否可见" path="visibleFlag">
-            <n-switch v-model:value="modalForm.visibleFlag" />
+          <n-form-item
+            label="下单用户"
+            path="shipAddressUserName"
+            :rule="{
+              required: true,
+              message: '请输入分类名称',
+              trigger: ['input', 'blur'],
+            }"
+          >
+            <n-input v-model:value="modalForm.shipAddressUserName" placeholder="请输入分类名称" />
+          </n-form-item>
+          <n-form-item label="订单总价" path="totalPrice">
+            <n-input-number v-model:value="modalForm.totalPrice" :min="0" :precision="2" w-screen>
+              <template #prefix> ￥ </template>
+            </n-input-number>
           </n-form-item>
         </n-form>
       </n-spin>
@@ -86,6 +92,25 @@ const extraParams = ref({})
 onMounted(() => {
   $table.value?.handleSearch()
 })
+
+const statusOptions = ref([
+  {
+    label: '待处理',
+    value: 'PENDING',
+  },
+  {
+    label: '待发货',
+    value: 'TO_DELIVER',
+  },
+  {
+    label: '配送中',
+    value: 'DELIVERING',
+  },
+  {
+    label: '已完成',
+    value: 'FINISHED',
+  },
+])
 
 const validateSort = (value) => {
   value && value >= 0
@@ -119,21 +144,6 @@ const columns = [
       return h('span', formatDateTime(row['orderDate']))
     },
   },
-  // {
-  //   title: '是否可见',
-  //   key: 'visibleFlag',
-  //   width: 100,
-  //   align: 'center',
-  //   render(row) {
-  //     return h(NSwitch, {
-  //       size: 'small',
-  //       rubberBand: false,
-  //       value: row['visibleFlag'],
-  //       loading: !!row.publishing,
-  //       onUpdateValue: () => handlePublish(row),
-  //     })
-  //   },
-  // },
   {
     title: '操作',
     key: 'actions',
@@ -152,16 +162,16 @@ const columns = [
           },
           { default: () => '查看', icon: renderIcon('majesticons:eye-line', { size: 14 }) }
         ),
-        h(
-          NButton,
-          {
-            size: 'small',
-            type: 'primary',
-            style: 'margin-left: 15px;',
-            onClick: () => handleEdit(row.productCategoryId),
-          },
-          { default: () => '编辑', icon: renderIcon('material-symbols:edit-outline', { size: 14 }) }
-        ),
+        // h(
+        //   NButton,
+        //   {
+        //     size: 'small',
+        //     type: 'primary',
+        //     style: 'margin-left: 15px;',
+        //     onClick: () => handleEdit(row.productCategoryId),
+        //   },
+        //   { default: () => '编辑', icon: renderIcon('material-symbols:edit-outline', { size: 14 }) }
+        // ),
         h(
           NButton,
           {
@@ -226,11 +236,12 @@ const {
   modalForm,
   modalFormRef,
 } = useCRUD({
-  name: '分类',
+  name: '订单',
   initForm: {
-    productCategoryName: '',
-    sortNo: 1,
-    visibleFlag: false,
+    orderNum: '',
+    orderSiteStatus: '',
+    shipAddressUserName: '',
+    totalPrice: '',
   },
   doCreate: api.addCategory,
   doDelete: api.delete,
